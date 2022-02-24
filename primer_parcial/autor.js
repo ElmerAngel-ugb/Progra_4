@@ -1,175 +1,157 @@
-Vue.component('autor', {
+Vue.component('autor',{
     data:()=>{
         return {
-            autor: [],
-            buscar: '',
-            autor: {
-                accion: 'nuevo',
+            buscar:'',
+            autors:[],
+            autor:{
+                accion : 'nuevo',
+                mostrar_msg : false,
                 msg : '',
-                idAutor: '',
+                idautor : '',
                 codigo: '',
                 nombre: '',
-                direccion: '',
-                telefono: '',
-                dui: ''
+                pais: '',
+                telefono: ''
             }
         }
     },
-    methods: {
-        buscarAutor(){
-            this.obtenerDatos(this.buscar);
+    methods:{
+        buscandoautor(){
+            this.obtenerautors(this.buscar);
         },
-        guardarautor(){
-            this.obtenerDatos();
-            let autor = this.autor || [];
-            if( this.autor.accion == 'nuevo' ){
-                this.autor.idAutor = idUnicoFecha();
-                autor.push(this.autor);
-            }else if( this.autor.accion == 'modificar' ){
-                let index = autor.findIndex(autor=>autor.idAutor==this.autor.idAutor);
-                autor[index] = this.autor;
-            }else if( this.autor.accion == 'eliminar' ){
-                let index = autor.findIndex(autor=>autor.idAutor==this.autor.idAutor);
-                autor.splice(index,1);
-            }
-            localStorage.setItem('autor', JSON.stringify(autor));
-            this.autor.msg = 'autor procesado con exito';
-            this.nuevoautor();
-            this.obtenerDatos();
-        },
-        modificarautor(data){
-            this.autor = JSON.parse(JSON.stringify(data));
-            this.autor.accion = 'modificar';
-        },
-        eliminarautor(data){
-            if( confirm(`¿Esta seguro de eliminar el autor ${data.nombre}?`) ){
-                this.autor.idAutor = data.idAutor;
+        eliminarautor(autor){
+            if( confirm(`Esta seguro de eliminar el autor ${autor.nombre}?`) ){
                 this.autor.accion = 'eliminar';
+                this.autor.idautor = autor.idautor;
                 this.guardarautor();
             }
+            this.nuevoautor();
         },
-        obtenerDatos(busqueda=''){
-            this.autor = [];
-            if( localStorage.getItem('autor')!=null ){
-                for(let i=0; i<JSON.parse(localStorage.getItem('autor')).length; i++){
-                    let data = JSON.parse(localStorage.getItem('autor'))[i];
-                    if( this.buscar.length>0 ){
-                        if( data.nombre.toLowerCase().indexOf(this.buscar.toLowerCase())>-1 ){
-                            this.autor.push(data);
-                        }
-                    }else{
-                        this.autor.push(data);
-                    }
-                }
+        modificarautor(datos){
+            this.autor = JSON.parse(JSON.stringify(datos));
+            this.autor.accion = 'modificar';
+        },
+        guardarautor(){
+            this.obtenerautors();
+            let autors = JSON.parse(localStorage.getItem('autors')) || [];
+            if(this.autor.accion=="nuevo"){
+                this.autor.idautor = generarIdUnicoFecha();
+                autors.push(this.autor);
+            } else if(this.autor.accion=="modificar"){
+                let index = autors.findIndex(autor=>autor.idautor==this.autor.idautor);
+                autors[index] = this.autor;
+            } else if( this.autor.accion=="eliminar" ){
+                let index = autors.findIndex(autor=>autor.idautor==this.autor.idautor);
+                autors.splice(index,1);
             }
+            localStorage.setItem('autors', JSON.stringify(autors));
+            this.nuevoautor();
+            this.obtenerautors();
+            this.autor.msg = 'autor procesado con exito';
+        },
+        obtenerautors(valor=''){
+            this.autors = [];
+            let autors = JSON.parse(localStorage.getItem('autors')) || [];
+            this.autors = autors.filter(autor=>autor.nombre.toLowerCase().indexOf(valor.toLowerCase())>-1);
         },
         nuevoautor(){
             this.autor.accion = 'nuevo';
-            this.autor.idAutor = '';
+            this.autor.msg = '';
+            this.autor.idautor = '';
             this.autor.codigo = '';
             this.autor.nombre = '';
-            this.autor.direccion = '';
+            this.autor.pais = '';
             this.autor.telefono = '';
-            this.autor.dui = '';
-            this.autor.msg = '';
         }
-    }, 
-    created(){
-        this.obtenerDatos();
     },
-    template: `
-        <div id='appAutor'>
-            <form @submit.prevent="guardarautor" @reset.prevent="nuevoautor" method="post" id="frmautor">
-                <div class="card mb-3">
-                    <div class="card-header text-white bg-dark">
-                        Administracion de autor
-                        <button type="button" class="btn-close bg-white" data-bs-dismiss="alert" data-bs-target="#frmautor" aria-label="Close"></button>
-                    </div>
-                    <div class="card-body">
+    created(){
+        this.obtenerautors();
+    },
+    template:`
+        <div id="appParcial">
+            <div class="card text-white" id="carautor">
+                <div class="card-header bg-primary">
+                    Registro de autores
+                    <button type="button" class="btn-close text-end" data-bs-dismiss="alert" data-bs-target="#carautor" aria-label="Close"></button>
+                </div>
+                <div class="card-body text-dark">
+                    <form method="post" @submit.prevent="guardarautor" @reset="nuevoautor">
                         <div class="row p-1">
-                            <div class="col col-md-1">Codigo</div>
+                            <div class="col col-md-2">Codigo:</div>
                             <div class="col col-md-2">
-                                <input v-model="autor.codigo" placeholder="codigo" pattern="[A-Z0-9]{3,10}" required title="Codigo de autor" class="form-control" type="text">
+                                <input title="Ingrese el codigo" v-model="autor.codigo" pattern="[0-9]{3,10}" required type="text" class="form-control">
                             </div>
                         </div>
                         <div class="row p-1">
-                            <div class="col col-md-1">Nombre</div>
-                            <div class="col col-md-2">
-                                <input v-model="autor.nombre" placeholder="escribe tu nombre" pattern="[A-Za-zÑñáéíóú ]{3,75}" required title="Nombre de autor" class="form-control" type="text">
+                            <div class="col col-md-2">Nombre:</div>
+                            <div class="col col-md-3">
+                                <input title="Ingrese el nombre" v-model="autor.nombre" pattern="[A-Za-zñÑáéíóúü ]{3,75}" required type="text" class="form-control">
                             </div>
                         </div>
                         <div class="row p-1">
-                            <div class="col col-md-1">Direccion</div>
-                            <div class="col col-md-2">
-                                <input v-model="autor.direccion" placeholder="donde vives" pattern="[A-Za-z0-9Ññáéíóú ]{3,100}" required title="Direccion de autor" class="form-control" type="text">
+                            <div class="col col-md-2">pais:</div>
+                            <div class="col col-md-3">
+                                <input title="Ingrese la pais" v-model="autor.pais" pattern="[A-Za-zñÑáéíóúü ]{3,100}" required type="text" class="form-control">
                             </div>
                         </div>
                         <div class="row p-1">
-                            <div class="col col-md-1">Telefono</div>
+                            <div class="col col-md-2">Telefono:</div>
                             <div class="col col-md-2">
-                                <input v-model="autor.telefono" placeholder="tu tel" pattern="[0-9]{4}-[0-9]{4}" required title="Telefono de autor" class="form-control" type="text">
+                                <input title="Ingrese el tel" v-model="autor.telefono" pattern="[0-9]{4}-[0-9]{4}" required type="text" class="form-control">
                             </div>
                         </div>
                         <div class="row p-1">
-                            <div class="col col-md-1">DUI</div>
-                            <div class="col col-md-2">
-                                <input v-model="autor.dui" placeholder="tu DUI" pattern="[0-9]{8}-[0-9]{1}" required title="DUI de autor" class="form-control" type="text">
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col col-md-3 text-center">
-                                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <div class="col col-md-5 text-center">
+                                <div v-if="autor.mostrar_msg" class="alert alert-primary alert-dismissible fade show" role="alert">
                                     {{ autor.msg }}
                                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col col-md-3 text-center">
-                                <button type="submit" class="btn btn-primary">Guardar</button>
-                                <button type="reset" class="btn btn-warning">Nuevo</button>
+                        <div class="row m-2">
+                            <div class="col col-md-5 text-center">
+                                <input class="btn btn-success" type="submit" value="Guardar">
+                                <input class="btn btn-warning" type="reset" value="Nuevo">
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
-            </form>
-            <div class="card mb-3" id="cardBuscarautor">
-                <div class="card-header text-white bg-dark">
-                    Busqueda de autor
-                    <button type="button" class="btn-close bg-white" data-bs-dismiss="alert" data-bs-target="#cardBuscarautor" aria-label="Close"></button>
+            </div>
+            <div class="card text-white" id="carBuscarautor">
+                <div class="card-header bg-primary">
+                    Busqueda de autores
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" data-bs-target="#carBuscarautor" aria-label="Close"></button>
                 </div>
                 <div class="card-body">
-                    <table class="table">
+                    <table class="table table-dark table-hover">
                         <thead>
                             <tr>
-                                <td colspan="6">
-                                    Buscar: <input title="Introduzca el texto a buscar" @keyup="buscarAutor" v-model="buscar" class="form-control" type="text">
-                                </td>
+                                <th colspan="6">
+                                    Buscar: <input @keyup="buscandoautor" v-model="buscar" placeholder="buscar aqui" class="form-control" type="text" >
+                                </th>
                             </tr>
                             <tr>
-                                <th>Codigo</th>
-                                <th>Nombre</th>
-                                <th>Direccion</th>
-                                <th>Telefono</th>
-                                <th>DUI</th>
+                                <th>CODIGO</th>
+                                <th>NOMBRE</th>
+                                <th>pais</th>
+                                <th>TEL</th>
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="item in autor" :key="item.idAutor" @click="modificarautor(item)">
+                            <tr v-for="item in autors" @click='modificarautor( item )' :key="item.idautor">
                                 <td>{{item.codigo}}</td>
                                 <td>{{item.nombre}}</td>
-                                <td>{{item.direccion}}</td>
+                                <td>{{item.pais}}</td>
                                 <td>{{item.telefono}}</td>
-                                <td>{{item.dui}}</td>
                                 <td>
-                                    <button type="button" class="btn btn-danger" @click="eliminarautor(item)">Eliminar</button>
+                                    <button class="btn btn-danger" @click="eliminarautor(item)">Eliminar</button>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div> 
+        </div>
     `
 });

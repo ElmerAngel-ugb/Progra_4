@@ -1,146 +1,167 @@
-Vue.component('libros', {
+Vue.component('libros',{
     data:()=>{
         return {
-            libros: [],
-            buscar: '',
-            libros: {
-                accion: 'nuevo',
+            buscar:'',
+            libros:[],
+            libro:{
+                accion : 'nuevo',
+                mostrar_msg : false,
                 msg : '',
-                idLibros: '',
+                idlibro : '',
+                idautor : '',
                 codigo: '',
-                nombre: ''
+                titulo: '',
+                editorial: '',
+                edicion: ''
             }
         }
     },
-    methods: {
-        buscarLibros(){
-            this.obtenerDatos(this.buscar);
+    methods:{
+        buscandolibro(){
+            this.obtenerlibros(this.buscar);
         },
-        guardarLibro(){
-            this.obtenerDatos();
-            let libros = this.libros || [];
-            if(this.libros.accion == 'nuevo'){
-                this.libros.idLibros = idUnicoFecha();
-                libros.push(this.libros);
-            }else if(this.libros.accion == 'modificar'){
-                let index = libros.findIndex(libros=>libros.idLibros==this.libros.idLibros);
-                libros[index] = this.libros;
-            }else if(this.libros.accion == 'eliminar'){
-                let index = libros.findIndex(libros=>libros.idLibros==this.libros.idLibros);
-                libros.splice(index,1);
-            }
-            localStorage.setItem('libros', JSON.stringify(this.libros));
-            this.libros.msg = 'Libro procesado con exito';
-            this.nuevoLibro();
-            this.obtenerDatos();
-        },
-        modificarLibro(data){
-            this.libros = JSON.parse(JSON.stringify(data));
-            this.libros.accion = 'modificar';
-        },
-        eliminarLibro(data){
-            if( confirm(`¿Esta seguro de eliminar el libro? ${data.nombre}?`) ){
-                this.libros.idLibros = data.idLibros;
-                this.libros.accion = 'eliminar';
+        eliminarlibro(libro){
+            if( confirm(`Esta seguro de eliminar el libro ${libro.titulo}?`) ){
+                this.libro.accion = 'eliminar';
+                this.libro.idlibro = libro.idlibro;
                 this.guardarlibro();
             }
+            this.nuevolibro();
         },
-        obtenerDatos(busqueda=''){
-            this.libros = [];
-            if( localStorage.getItem('libros')!=null ){
-                for(let i=0; i<JSON.parse(localStorage.getItem('libros')).length; i++){
-                    let data = JSON.parse(localStorage.getItem('libros'))[i];
-                    if( this.buscar.length>0 ){
-                        if( data.nombre.toLowerCase().indexOf(this.buscar.toLowerCase())>-1 ){
-                            this.libros.push(data);
-                        }
-                    }else{
-                        this.libros.push(data);
-                    }
-                }
+        modificarlibro(datos){
+            this.libro = JSON.parse(JSON.stringify(datos));
+            this.libro.accion = 'modificar';
+        },
+        guardarlibro(){
+            this.obtenerlibros();
+            let libros = JSON.parse(localStorage.getItem('libros')) || [];
+            if(this.libro.accion=="nuevo"){
+                this.libro.idlibro = generarIdUnicoFecha();
+                libros.push(this.libro);
+            } else if(this.libro.accion=="modificar"){
+                let index = libros.findIndex(libro=>libro.idlibro==this.libro.idlibro);
+                libros[index] = this.libro;
+            } else if( this.libro.accion=="eliminar" ){
+                let index = libros.findIndex(libro=>libro.idlibro==this.libro.idlibro);
+                libros.splice(index,1);
             }
+            localStorage.setItem('libros', JSON.stringify(libros));
+            this.nuevolibro();
+            this.obtenerlibros();
+            this.libro.msg = 'libro procesado con exito';
         },
-        nuevoLibro(){
-            this.libros.accion = 'nuevo';
-            this.libros.idLibros = '';
-            this.libros.codigo = '';
-            this.libros.nombre = '';
-            this.libros.msg = '';
-            console.log(this.libros);
+        obtenerlibros(valor=''){
+            this.libros = [];
+            let libros = JSON.parse(localStorage.getItem('libros')) || [];
+            this.libros = libros.filter(libro=>libro.titulo.toLowerCase().indexOf(valor.toLowerCase())>-1);
+        },
+        nuevolibro(){
+            this.libro.accion = 'nuevo';
+            this.libro.msg = '';
+            this.libro.idlibro = '';
+            this.libro.idautor = '';
+            this.libro.codigo = '';
+            this.libro.titulo = '';
+            this.libro.editorial = '';
+            this.libro.edicion = '';
         }
-    }, 
-    created(){
-        this.obtenerDatos();
     },
-    template: `
-        <div id='appAutor'>
-            <form @submit.prevent="guardarLibro" @reset.prevent="nuevoLibro" method="post" id="frmlibros">
-                <div class="card mb-3">
-                    <div class="card-header text-white bg-dark">
-                        Administracion de Libros
-                        <button type="button" class="btn-close bg-white" data-bs-dismiss="alert" data-bs-target="#frmlibros" aria-label="Close"></button>
-                    </div>
-                    <div class="card-body">
+    created(){
+        this.obtenerlibros();
+    },
+    template:`
+        <div id="appParcial">
+            <div class="card text-white" id="carlibro">
+                <div class="card-header bg-primary">
+                    Registro de libros
+                    <button type="button" class="btn-close text-end" data-bs-dismiss="alert" data-bs-target="#carlibro" aria-label="Close"></button>
+                </div>
+                <div class="card-body text-dark">
+                    <form method="post" @submit.prevent="guardarlibro" @reset="nuevolibro">
                         <div class="row p-1">
-                            <div class="col col-md-1">Codigo</div>
+                            <div class="col col-md-2">Autor:</div>
                             <div class="col col-md-2">
-                                <input v-model="Libros.codigo" placeholder="codigo" pattern="[A-Z0-9]{3,10}" required title="Codigo de libro" class="form-control" type="text">
+                                <input title="Ingrese el codigo" v-model="libro.idautor" pattern="[0-9]{3,10}" required type="text" class="form-control">
                             </div>
                         </div>
                         <div class="row p-1">
-                            <div class="col col-md-1">Nombre</div>
+                            <div class="col col-md-2">Codigo:</div>
                             <div class="col col-md-2">
-                                <input v-model="libros.nombre" placeholder="escribe tu nombre" pattern="[A-Za-zÑñáéíóú ]{3,75}" required title="Nombre de libros" class="form-control" type="text">
+                                <input title="Ingrese el codigo" v-model="libro.codigo" pattern="[0-9]{3,10}" required type="text" class="form-control">
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col col-md-3 text-center">
-                                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                                    {{ libros.msg }}
+                        <div class="row p-1">
+                            <div class="col col-md-2">titulo:</div>
+                            <div class="col col-md-3">
+                                <input title="Ingrese el titulo" v-model="libro.titulo" pattern="[A-Za-zñÑáéíóúü ]{3,75}" required type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="row p-1">
+                            <div class="col col-md-2">editorial:</div>
+                            <div class="col col-md-3">
+                                <input title="Ingrese la editorial" v-model="libro.editorial" pattern="[A-Za-zñÑáéíóúü ]{3,100}" required type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="row p-1">
+                            <div class="col col-md-2">edicion:</div>
+                            <div class="col col-md-2">
+                                <input title="Ingrese el tel" v-model="libro.edicion" pattern="[0-9]{3}" required type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="row p-1">
+                            <div class="col col-md-5 text-center">
+                                <div v-if="libro.mostrar_msg" class="alert alert-primary alert-dismissible fade show" role="alert">
+                                    {{ libro.msg }}
                                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col col-md-3 text-center">
-                                <button type="submit" class="btn btn-primary">Guardar</button>
-                                <button type="reset" class="btn btn-warning">Nuevo</button>
+                        <div class="row m-2">
+                            <div class="col col-md-5 text-center">
+                                <input class="btn btn-success" type="submit" value="Guardar">
+                                <input class="btn btn-warning" type="reset" value="Nuevo">
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
-            </form>
-            <div class="card mb-3" id="cardBuscarLibro">
-                <div class="card-header text-white bg-dark">
-                    Busqueda de Libros
-                    <button type="button" class="btn-close bg-white" data-bs-dismiss="alert" data-bs-target="#cardBuscarLibro" aria-label="Close"></button>
+            </div>
+            <div class="card text-white" id="carBuscarlibro">
+                <div class="card-header bg-primary">
+                    Busqueda de libros
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" data-bs-target="#carBuscarlibro" aria-label="Close"></button>
                 </div>
                 <div class="card-body">
-                    <table class="table">
+                    <table class="table table-dark table-hover">
                         <thead>
                             <tr>
-                                <td colspan="6">
-                                    Buscar: <input title="Introduzca el nombre del libro a buscar" @keyup="buscarLibros" v-model="buscar" class="form-control" type="text">
-                                </td>
+                                <th colspan="6">
+                                    Buscar: <input @keyup="buscandolibro" v-model="buscar" placeholder="buscar aqui" class="form-control" type="text" >
+                                </th>
                             </tr>
                             <tr>
-                                <th>Codigo</th>
-                                <th>Nombre</th>
+                                <th>AUTOR</th>
+                                <th>CODIGO</th>
+                                <th>titulo</th>
+                                <th>editorial</th>
+                                <th>Edicion</th>
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="item in libros" :key="item.idLibros" @click="modificarLibros(item)">
+                            <tr v-for="item in libros" @click='modificarlibro( item )' :key="item.idlibro">
+                                <td>{{item.idautor}}</td>
                                 <td>{{item.codigo}}</td>
-                                <td>{{item.nombre}}</td>
+                                <td>{{item.titulo}}</td>
+                                <td>{{item.editorial}}</td>
+                                <td>{{item.edicion}}</td>
                                 <td>
-                                    <button type="button" class="btn btn-danger" @click="eliminarLibro(item)">Eliminar</button>
+                                    <button class="btn btn-danger" @click="eliminarlibro(item)">Eliminar</button>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div> 
+        </div>
     `
 });
